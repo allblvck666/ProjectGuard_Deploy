@@ -1,0 +1,22 @@
+INFO:     Will watch for changes in these directories: ['/Users/dmitrijzuravlev/Projects666/ProjectGuard_Mini_v6.8_auth/backend']
+INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+INFO:     Started reloader process [29080] using StatReload
+INFO:     Started server process [29094]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+✅ Авто-миграция базы завершена (extend_count, auto_closed, updated_at)
+INFO:     2a01:e5c0:334a::2:0 - "GET /api/ping HTTP/1.1" 200 OK
+INFO:     2a01:e5c0:334a::2:0 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51002 - "OPTIONS /api/admin/managers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51003 - "OPTIONS /api/admin/extend-requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51004 - "OPTIONS /api/admin/managers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51005 - "OPTIONS /api/admin/extend-requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51006 - "GET /api/admin/extend-requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51002 - "GET /api/admin/managers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51006 - "GET /api/admin/extend-requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51002 - "GET /api/admin/managers HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29094]
+INFO:     Stopping reloader process [29080]
