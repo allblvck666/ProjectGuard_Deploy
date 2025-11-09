@@ -1,0 +1,6 @@
+echo "fastapi
+uvicorn
+aiogram==3.10.0
+aiosqlite
+requests
+python-dotenv" > requirements.txt
