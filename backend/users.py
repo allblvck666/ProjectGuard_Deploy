@@ -145,3 +145,42 @@ def list_users_admin(user=Depends(require_admin)):
     conn.close()
     return {"ok": True, "users": [dict(r) for r in rows]}
 
+# === Telegram WebApp Авторизация ===
+from jose import jwt
+from datetime import timedelta
+
+SECRET_KEY = "supersecretkey"  # потом можно вынести в .env
+ALGORITHM = "HS256"
+
+@router.post("/auth/telegram")
+def auth_telegram(user: dict):
+    """
+    Принимает объект user от Telegram WebApp
+    Возвращает JWT токен
+    """
+    tg_id = user.get("id")
+    username = user.get("username", "")
+    first_name = user.get("first_name", "")
+
+    if not tg_id:
+        raise HTTPException(status_code=400, detail="Missing Telegram user ID")
+
+    # 1️⃣ Создаём или обновляем пользователя в БД
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT OR IGNORE INTO users (tg_id, tg_username, first_name, role, created_at) VALUES (?,?,?,?,?)",
+        (tg_id, username, first_name, "manager", now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+    # 2️⃣ Генерируем JWT токен
+    payload = {
+        "sub": str(tg_id),
+        "role": "manager",
+        "exp": datetime.utcnow() + timedelta(days=7),
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+    return {"ok": True, "token": token, "user": {"tg_id": tg_id, "username": username}}
