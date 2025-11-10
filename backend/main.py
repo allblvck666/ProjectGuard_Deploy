@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Body, BackgroundTasks, Depends, Header
-from users import router as users_router, init_users_table
+from backend.users import router as users_router, init_users_table
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
