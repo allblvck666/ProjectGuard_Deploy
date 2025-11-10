@@ -1,7 +1,7 @@
 // frontend/src/api.js
 import axios from "axios";
 
-const API_BASE = "http://127.0.0.1:8010";
+const API_BASE = "https://projectguard-backend.onrender.com";
 
 const api = axios.create({
   baseURL: API_BASE,
