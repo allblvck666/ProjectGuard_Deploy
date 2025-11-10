@@ -1670,7 +1670,7 @@ def notify_user(data: dict):
     print("📩 Получен запрос на уведомление:", tg_username, message)
     try:
         res = requests.post(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            f"https://projectguard-backend.onrender.com",
             json={
                 "chat_id": int(tg_username) if tg_username.isdigit() else tg_username,
                 "text": message,
