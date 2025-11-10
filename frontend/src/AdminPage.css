@@ -1,0 +1,400 @@
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import "./styles.css";
+
+// ❗ если меняете IP/порт — правьте и тут, и в App.jsx
+const API = "http://192.168.0.107:8000";
+
+/* Небольшие утилиты UI */
+function Row({ children, gap = 8, wrap = true }) {
+  return (
+    <div
+      className="row"
+      style={{ alignItems: "center", gap, flexWrap: wrap ? "wrap" : "nowrap" }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Confirm({
+  title = "Подтверждение",
+  okText = "OK",
+  cancelText = "Отмена",
+  onOk,
+  onCancel,
+  children,
+  disabled,
+}) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: 16,
+      }}
+      onClick={onCancel}
+    >
+      <div className="card" style={{ width: "100%", maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
+        <h3 style={{ marginTop: 0 }}>{title}</h3>
+        <div style={{ margin: "12px 0" }}>{children}</div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button className="btn secondary" onClick={onCancel}>{cancelText}</button>
+          <button className="btn" onClick={onOk} disabled={disabled}>{okText}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminPage({ onBack }) {
+  /* ===== tabs: managers / requests ===== */
+  const [tab, setTab] = useState("managers");
+
+  /* ====== MANAGERS ====== */
+  const [managers, setManagers] = useState([]); // [{id, name, total, active, success, closed}]
+  const [loadingManagers, setLoadingManagers] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [edit, setEdit] = useState(null); // {id, name, orig}
+  const [remove, setRemove] = useState(null); // {id, name, total}
+  const [transferTo, setTransferTo] = useState(""); // manager id для перевода
+
+  const loadManagers = async () => {
+    setLoadingManagers(true);
+    try {
+      const r = await axios.get(`${API}/api/admin/managers`);
+      setManagers(r.data || []);
+    } finally {
+      setLoadingManagers(false);
+    }
+  };
+
+  const doAdd = async () => {
+    const name = newName.trim();
+    if (!name) return alert("Введите имя менеджера");
+    await axios.post(`${API}/api/admin/managers`, { name });
+    setNewName("");
+    await loadManagers();
+  };
+
+  const startEdit = (m) => setEdit({ id: m.id, name: m.name, orig: m.name });
+  const cancelEdit = () => setEdit(null);
+  const saveEdit = async () => {
+    const nm = (edit?.name || "").trim();
+    if (!nm) return alert("Имя не может быть пустым");
+    await axios.patch(`${API}/api/admin/managers/${edit.id}`, { name: nm });
+    setEdit(null);
+    await loadManagers();
+  };
+
+  const askRemove = (m) => {
+    setTransferTo("");
+    setRemove({ id: m.id, name: m.name, total: m.total });
+  };
+  const cancelRemove = () => setRemove(null);
+
+  const confirmRemove = async () => {
+    const params = {};
+    if (transferTo) params.transfer_to = transferTo;
+    await axios.delete(`${API}/api/admin/managers/${remove.id}`, { params });
+    setRemove(null);
+    await loadManagers();
+  };
+
+  /* ====== EXTEND REQUESTS ====== */
+  const [requests, setRequests] = useState([]);
+  const [loadingReq, setLoadingReq] = useState(false);
+  const [extendBusy, setExtendBusy] = useState(0);
+
+  const loadRequests = async () => {
+    setLoadingReq(true);
+    try {
+      const r = await axios.get(`${API}/api/admin/extend-requests`);
+      setRequests(r.data || []);
+    } finally {
+      setLoadingReq(false);
+    }
+  };
+
+  const doAdminExtend = async (pid, days = 10) => {
+    try {
+      setExtendBusy(pid);
+      await axios.post(`${API}/api/admin/protections/${pid}/extend-any?days=${days}`);
+      await loadRequests();
+    } catch (e) {
+      alert(e.response?.data?.detail || "Не удалось продлить");
+    } finally {
+      setExtendBusy(0);
+    }
+  };
+
+  /* ===== initial load & tab change ===== */
+  useEffect(() => {
+    loadManagers();
+    loadRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const back = () => {
+    if (onBack) onBack();
+    else window.history.back();
+  };
+
+  const managersOptions = useMemo(
+    () => managers.map((m) => ({ value: String(m.id), label: m.name })),
+    [managers]
+  );
+
+  return (
+    <div className="container">
+      <div className="header sticky" style={{ gap: 8, alignItems: "center" }}>
+        <h1 style={{ marginRight: "auto" }}>👑 Админка</h1>
+        <div className="mode-toggle">
+          <div
+            className={`tag ${tab === "managers" ? "active" : ""}`}
+            onClick={() => setTab("managers")}
+          >
+            Менеджеры
+          </div>
+          <div
+            className={`tag ${tab === "requests" ? "active" : ""}`}
+            onClick={() => setTab("requests")}
+          >
+            Запросы на продление
+          </div>
+        </div>
+        <button className="btn" onClick={back}>⬅️ Назад</button>
+      </div>
+
+      {/* ===== TAB: MANAGERS ===== */}
+      {tab === "managers" && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Управление менеджерами</h3>
+
+          <Row>
+            <input
+              className="input"
+              style={{ minWidth: 260 }}
+              placeholder="Новый менеджер…"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <button className="btn" onClick={doAdd}>➕ Добавить</button>
+            <button className="btn secondary" onClick={loadManagers} disabled={loadingManagers}>
+              🔄 Обновить
+            </button>
+          </Row>
+
+          <div style={{ marginTop: 12 }}>
+            {loadingManagers && <div className="small">Загрузка…</div>}
+            {!loadingManagers && managers.length === 0 && (
+              <div className="small">Пока нет менеджеров — добавьте первого 👆</div>
+            )}
+            {!loadingManagers && managers.length > 0 && (
+              <div style={{ overflowX: "auto" }}>
+                <table className="table" style={{ width: "100%", minWidth: 760 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Имя</th>
+                      <th>Всего</th>
+                      <th>Активных</th>
+                      <th>Успешных</th>
+                      <th>Закрытых</th>
+                      <th style={{ width: 230 }}>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {managers.map((m) => {
+                      const isEdit = edit?.id === m.id;
+                      return (
+                        <tr key={m.id}>
+                          <td>
+                            {isEdit ? (
+                              <input
+                                className="input"
+                                value={edit.name}
+                                onChange={(e) => setEdit((v) => ({ ...v, name: e.target.value }))}
+                              />
+                            ) : (
+                              <b>{m.name}</b>
+                            )}
+                          </td>
+                          <td style={{ textAlign: "center" }}>{m.total}</td>
+                          <td style={{ textAlign: "center" }}>{m.active}</td>
+                          <td style={{ textAlign: "center" }}>{m.success}</td>
+                          <td style={{ textAlign: "center" }}>{m.closed}</td>
+                          <td>
+                            {isEdit ? (
+                              <Row gap={6} wrap={false}>
+                                <button className="btn success" onClick={saveEdit}>💾 Сохранить</button>
+                                <button className="btn secondary" onClick={cancelEdit}>Отмена</button>
+                              </Row>
+                            ) : (
+                              <Row gap={6} wrap={false}>
+                                <button className="btn" onClick={() => startEdit(m)}>✏️ Переименовать</button>
+                                <button className="btn danger" onClick={() => askRemove(m)}>🗑️ Удалить</button>
+                              </Row>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== TAB: REQUESTS ===== */}
+      {tab === "requests" && (
+        <div className="card">
+          <Row>
+            <h3 style={{ margin: 0 }}>Запросы на продление</h3>
+            <button className="btn secondary" onClick={loadRequests} disabled={loadingReq}>
+              🔄 Обновить
+            </button>
+          </Row>
+
+          <div style={{ marginTop: 12 }}>
+            {loadingReq && <div className="small">Загрузка…</div>}
+            {!loadingReq && requests.length === 0 && (
+              <div className="small">Запросов нет.</div>
+            )}
+            {!loadingReq && requests.length > 0 && (
+              <div style={{ overflowX: "auto" }}>
+                <table className="table" style={{ width: "100%", minWidth: 860 }}>
+                  <thead>
+                    <tr>
+                      <th>ID защиты</th>
+                      <th>Менеджер</th>
+                      <th>Партнёр</th>
+                      <th>SKU</th>
+                      <th>Запрошено</th>
+                      <th>Дней</th>
+                      <th>Истекает</th>
+                      <th>Действие</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requests.map((r) => (
+                      <tr key={r.history_id}>
+                        <td>#{r.protection_id}</td>
+                        <td>{r.manager}</td>
+                        <td>{r.partner}</td>
+                        <td className="small">{r.sku}</td>
+                        <td className="small">
+                          {new Date(r.requested_at).toLocaleString()}
+                        </td>
+                        <td style={{ textAlign: "center" }}>{r.days}</td>
+                        <td className="small">{r.expires_at}</td>
+                        <td>
+                          <Row gap={6} wrap={false}>
+                            <button
+                              className="btn success"
+                              onClick={() => doAdminExtend(r.protection_id, r.days || 10)}
+                              disabled={extendBusy === r.protection_id}
+                            >
+                              ✅ Продлить
+                            </button>
+                            <button
+                              className="btn secondary"
+                              onClick={() => doAdminExtend(r.protection_id, 10)}
+                              disabled={extendBusy === r.protection_id}
+                            >
+                              ➕ 10 дн
+                            </button>
+                          </Row>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== CONFIRM DELETE MANAGER ===== */}
+      {remove && (
+        <Confirm
+          title="Удалить менеджера"
+          okText="Удалить"
+          onOk={confirmRemove}
+          onCancel={cancelRemove}
+          disabled={false}
+        >
+          <div className="small" style={{ lineHeight: 1.5 }}>
+            Вы собираетесь удалить менеджера <b>{remove.name}</b>.
+            {remove.total > 0 ? (
+              <>
+                <br />
+                У него есть <b>{remove.total}</b> защит(ы). Выберите, кому их
+                перевести, или удаление не будет выполнено.
+                <div style={{ marginTop: 10 }}>
+                  <select
+                    className="select"
+                    value={transferTo}
+                    onChange={(e) => setTransferTo(e.target.value)}
+                  >
+                    <option value="">— выбрать менеджера для перевода —</option>
+                    {managers
+                      .filter((m) => m.id !== remove.id)
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <>
+                <br />
+                У него нет защит — можно удалять.
+              </>
+            )}
+          </div>
+        </Confirm>
+      )}
+    </div>
+  );
+}
+/* 📱 Мобильная адаптация таблиц */
+@media (max-width: 768px) {
+  table.table,
+  table.table thead {
+    display: none;
+  }
+  table.table tbody,
+  table.table tr,
+  table.table td {
+    display: block;
+    width: 100%;
+  }
+  table.table tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    padding: 10px;
+  }
+  table.table td {
+    padding: 4px 0;
+    font-size: 14px;
+  }
+  table.table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 600;
+    opacity: 0.7;
+    margin-bottom: 2px;
+  }
+}
