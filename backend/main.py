@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 from datetime import datetime
-from users import router as users_router
+from backend.users import router as users_router
 from db import get_conn, now_iso  # без add_history # только без точки в начале!
 import re
 import sqlite3
