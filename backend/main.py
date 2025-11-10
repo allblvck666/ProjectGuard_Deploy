@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Literal
 from datetime import datetime
 from backend.users import router as users_router
-from db import get_conn, now_iso  # без add_history # только без точки в начале!
+from backend.db import get_conn, now_iso  # без add_history # только без точки в начале!
 import re
 import sqlite3
 import json
