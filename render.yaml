@@ -7,6 +7,8 @@ services:
     autoDeploy: true
     envVars:
       - key: BOT_TOKEN
-        sync: false
+        value: 8256079955:AAGrghwannJh_tub3Av460PRKLV0nGR_cc8
+      - key: SECRET_KEY
+        value: Messiah_Secret_2025
       - key: FRONTEND_URL
         value: https://projectguard-mini.onrender.com

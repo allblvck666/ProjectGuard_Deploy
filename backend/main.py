@@ -94,11 +94,15 @@ def reject_pending(pid: int, payload: dict, user=Depends(require_admin)):
 # ===== CORS =====
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://projectguard-mini.onrender.com",
+        "https://projectguard-backend.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ===== Models =====
 class SkuItem(BaseModel):
@@ -251,8 +255,9 @@ import hashlib, hmac
 from fastapi import Request
 from jose import jwt, JWTError
 
-SECRET_KEY = "your_super_secret_jwt_key"  # можешь вписать что-то своё, типа "Messiah_Secret_2025"
-BOT_TOKEN = "8256079955:AAGrghwannJh_tub3Av460PRKLV0nGR_cc8"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8256079955:AAGrghwannJh_tub3Av460PRKLV0nGR_cc8")
+SECRET_KEY = os.getenv("SECRET_KEY", "Messiah_Secret_2025")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://projectguard-mini.onrender.com")
 ALGORITHM = "HS256"
 
 # --- Проверка Telegram-данных ---
