@@ -97,7 +97,7 @@ def get_assistants(manager_id: int):
     conn.close()
     return {"ok": True, "assistants": [dict(r) for r in rows]}
 from fastapi import Depends
-from auth import require_admin  # ⚠️ если функция require_admin в main.py — оставь так
+from backend.auth import require_admin  # ⚠️ если функция require_admin в main.py — оставь так
 
 # === Обновить пользователя (роль, группа, менеджер, регион) ===
 @router.patch("/{user_id}")
