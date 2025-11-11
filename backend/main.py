@@ -12,6 +12,7 @@ from db import get_conn, now_iso  # без add_history
 import re
 import sqlite3
 import json
+import os
 from contextlib import closing
 from pathlib import Path
 
