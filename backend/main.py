@@ -19,7 +19,7 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parent / "data.sqlite3"
 
-from backend.db import get_conn, init_db, now_iso, add_days, load_skus
+from db import get_conn, init_db, now_iso, add_days, load_skus
 # --- Проверка токена и роли пользователя ---
 def get_current_user(token: str = Header(None)):
     if not token:
