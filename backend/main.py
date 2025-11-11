@@ -1,26 +1,26 @@
-from fastapi import FastAPI, HTTPException, Body, BackgroundTasks, Depends, Header
-from users import router as users_router, init_users_table
+from fastapi import FastAPI, HTTPException, Body, BackgroundTasks, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 from datetime import datetime
-from users import router as users_router
-from db import get_conn, now_iso  # без add_history
-import re
-import sqlite3
-import json
-import os
-from contextlib import closing
 from pathlib import Path
+from jose import jwt, JWTError
+SECRET_KEY = "supersecretkey"  # потом можно вынести в .env
+ALGORITHM = "HS256"
+import asyncio, sqlite3, json, os, re, hashlib, hmac
+
+# === Локальные модули ===
+from backend.db import get_conn, init_db, now_iso, add_days, load_skus
+from backend.users import router as users_router, init_users_table
+from backend.auth import require_admin
+
 
 
 
 DB_PATH = Path(__file__).resolve().parent / "data.sqlite3"
 
-from db import get_conn, init_db, now_iso, add_days, load_skus
 # --- Проверка токена и роли пользователя ---
 def get_current_user(token: str = Header(None)):
     if not token:
@@ -36,7 +36,6 @@ def require_admin(user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Access denied: admin only")
     return user
 # === Вспомогательные функции ===
-from datetime import datetime
 
 def fmt_iso(dt: datetime) -> str:
     """Преобразует datetime в ISO строку (YYYY-MM-DDTHH:MM:SS)"""
@@ -46,6 +45,14 @@ def fmt_iso(dt: datetime) -> str:
 
 app = FastAPI(title="ProjectGuard Mini API", version="2.2")
 SKUS = load_skus()
+# === CORS настройки ===
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # временно для тестов
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ====== ADMIN: approve / reject pending protections ======
@@ -96,8 +103,9 @@ def reject_pending(pid: int, payload: dict, user=Depends(require_admin)):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://projectguard-mini.onrender.com",
-        "https://projectguard-backend.onrender.com"
+        "https://projectguard-frontend.onrender.com",  # твой фронт
+        "https://projectguard-deploy.onrender.com",    # твой бэкенд
+        "http://localhost:5173"                        # локальная разработка
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -258,7 +266,7 @@ from jose import jwt, JWTError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8256079955:AAGrghwannJh_tub3Av460PRKLV0nGR_cc8")
 SECRET_KEY = os.getenv("SECRET_KEY", "Messiah_Secret_2025")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://projectguard-mini.onrender.com")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://projectguard-frontend.onrender.com")
 ALGORITHM = "HS256"
 
 # --- Проверка Telegram-данных ---
@@ -1629,7 +1637,7 @@ async def reject_handler(callback: types.CallbackQuery):
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-WEBAPP_URL = "https://projectguard-mini.onrender.com"
+WEBAPP_URL = "https://projectguard-frontend.onrender.com"
 
 @dp.message(F.text == "/start")
 async def cmd_start_with_webapp(message: types.Message):
@@ -1692,26 +1700,4 @@ def notify_user(data: dict):
 
 from fastapi import Request
 
-@app.post("/api/auth/telegram")
-async def telegram_login(data: dict = Body(...)):
-    tg_id = data.get("id")
-    first_name = data.get("first_name", "")
-    username = data.get("username", "")
-    role = "manager"  # по умолчанию менеджер
 
-    if not tg_id:
-        raise HTTPException(status_code=400, detail="Missing tg_id")
-
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT OR IGNORE INTO users (tg_id, tg_username, first_name, role, created_at)
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (tg_id, username, first_name, role, now_iso())
-    )
-    conn.commit()
-    conn.close()
-
-    return {"ok": True, "msg": "Пользователь зарегистрирован"}
