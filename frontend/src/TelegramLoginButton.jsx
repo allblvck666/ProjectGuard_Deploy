@@ -1,13 +1,30 @@
 // frontend/src/TelegramLoginButton.jsx
 export default function TelegramLoginButton() {
-    const BOT_NAME = "ProjectGuardBot"; // твой username бота без @
-    const BACKEND_URL = "https://projectguard-deploy.onrender.com"; // твой Render backend
+    const BACKEND_URL = "https://projectguard-deploy.onrender.com";
   
-    const handleLogin = () => {
-      const url = `https://t.me/${BOT_NAME}?start=login`;
-      window.Telegram?.LoginWidget
-        ? window.Telegram.LoginWidget.init({ bot_id: BOT_NAME })
-        : (window.location.href = `${BACKEND_URL}/api/auth/telegram`);
+    const handleLogin = async () => {
+      const payload = {
+        id: 426188469,
+        username: "messiah_66",
+        first_name: "Messiah",
+      };
+  
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        console.log("✅ AUTH RESPONSE:", data);
+        alert("Авторизация успешна!");
+        localStorage.setItem("jwt_token", data.token);
+        localStorage.setItem("role", data.role);
+        window.location.href = "/";
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка при авторизации");
+      }
     };
   
     return (
@@ -25,6 +42,7 @@ export default function TelegramLoginButton() {
           fontWeight: 600,
           cursor: "pointer",
           width: "fit-content",
+          margin: "0 auto",
         }}
       >
         <img
