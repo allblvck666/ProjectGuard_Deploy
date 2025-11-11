@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Body, BackgroundTasks, Depends, Header
-from backend.users import router as users_router, init_users_table
+from users import router as users_router, init_users_table
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -7,8 +7,8 @@ from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 from datetime import datetime
-from backend.users import router as users_router
-from backend.db import get_conn, now_iso  # без add_history # только без точки в начале!
+from users import router as users_router
+from db import get_conn, now_iso  # без add_history
 import re
 import sqlite3
 import json
