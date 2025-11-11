@@ -17,7 +17,8 @@ console.log("🔥 App.jsx reloaded at", new Date().toISOString());
 import LoginPage from "./LoginPage";
 
 // ✅ Правильный универсальный путь
-const API = "https://projectguard-backend.onrender.com";
+import { API_BASE } from "./api";
+const API = API_BASE;
 
 // === Telegram WebApp авторизация ===
 useEffect(() => {
