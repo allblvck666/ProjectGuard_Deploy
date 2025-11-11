@@ -1,6 +1,7 @@
 // frontend/src/LoginPage.jsx
 import { useState } from "react";
 import { api } from "./api";
+import TelegramLoginButton from "./TelegramLoginButton"; // ✅ добавляем импорт
 
 export default function LoginPage({ onLogin }) {
   const [tgId, setTgId] = useState("");
@@ -17,13 +18,10 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
-    // бекенд ждёт вот такой json: { id, username, first_name, ... }
     const payload = {
       id: Number(tgId),
       username: username || "",
       first_name: firstName || "",
-      // hash он у тебя проверяет, но мы сейчас локально — поэтому уберём
-      // а в бекенде verify_telegram_auth можно временно ослабить
     };
 
     try {
@@ -43,12 +41,39 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="container" style={{ maxWidth: 420, marginTop: 40 }}>
-      <h2>Вход</h2>
+    <div
+      className="container"
+      style={{
+        maxWidth: 420,
+        marginTop: 80,
+        textAlign: "center",
+      }}
+    >
+      <h2>Вход через Telegram</h2>
       <p className="small" style={{ opacity: 0.7 }}>
-        Пока что ручной вход. Потом можно прикрутить настоящую Telegram-auth.
+        Авторизуйтесь, чтобы попасть в ProjectGuard
       </p>
-      <form onSubmit={submit} className="card" style={{ gap: 8, display: "flex", flexDirection: "column" }}>
+
+      {/* 🔹 Кнопка Telegram входа */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+        <TelegramLoginButton />
+      </div>
+
+      <div style={{ marginTop: 40, opacity: 0.6, fontSize: 13 }}>
+        или ручной вход (для тестов)
+      </div>
+
+      {/* 🔹 Старый ручной вход (оставляем как fallback) */}
+      <form
+        onSubmit={submit}
+        className="card"
+        style={{
+          gap: 8,
+          display: "flex",
+          flexDirection: "column",
+          marginTop: 12,
+        }}
+      >
         <label>
           Telegram ID
           <input
@@ -76,12 +101,13 @@ export default function LoginPage({ onLogin }) {
             placeholder="Дмитрий"
           />
         </label>
+
         {err && <div style={{ color: "tomato" }}>{err}</div>}
+
         <button className="btn" type="submit" disabled={loading}>
-          {loading ? "Входим..." : "Войти"}
+          {loading ? "Входим..." : "Войти вручную"}
         </button>
       </form>
     </div>
   );
 }
-
