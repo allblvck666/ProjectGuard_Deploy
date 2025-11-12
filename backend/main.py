@@ -46,13 +46,7 @@ def fmt_iso(dt: datetime) -> str:
 app = FastAPI(title="ProjectGuard Mini API", version="2.2")
 SKUS = load_skus()
 # === CORS настройки ===
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # временно для тестов
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 
 # ====== ADMIN: approve / reject pending protections ======
@@ -1700,4 +1694,7 @@ def notify_user(data: dict):
 
 from fastapi import Request
 
+@app.get("/", tags=["root"])
+def root():
+    return {"ok": True, "message": "🚀 ProjectGuard backend is alive"}
 
