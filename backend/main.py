@@ -94,17 +94,20 @@ def reject_pending(pid: int, payload: dict, user=Depends(require_admin)):
     return {"ok": True, "reason": reason}
 
 # ===== CORS =====
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://projectguard-frontend.onrender.com",  # твой фронт
-        "https://projectguard-deploy.onrender.com",    # твой бэкенд
-        "http://localhost:5173"                        # локальная разработка
+        "https://projectguard-frontend.onrender.com",  # твой фронт на Render
+        "https://projectguard-backend.onrender.com",   # твой бекенд на Render
+        "http://localhost:5173",                       # локальная разработка
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # ===== Models =====
