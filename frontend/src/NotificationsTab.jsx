@@ -1,7 +1,8 @@
 // frontend/src/NotificationsTab.jsx
 import React, { useEffect, useState } from "react";
 
-const API = "http://127.0.0.1:8010";
+import { API_BASE } from "./api";
+const API = API_BASE;
 
 export default function NotificationsTab() {
   const [managers, setManagers] = useState([]);

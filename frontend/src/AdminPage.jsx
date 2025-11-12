@@ -215,7 +215,8 @@ const loadManagers = async () => {
 import "./styles.css";
 
 // ❗ если меняете IP/порт — правьте и тут, и в App.jsx
-const API = "http://127.0.0.1:8010";
+import { API_BASE } from "./api";
+const API = API_BASE;
 
 
 /* Небольшие утилиты UI */
